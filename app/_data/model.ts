@@ -1,0 +1,1 @@
+export const model = 'gemini-3-flash-preview';

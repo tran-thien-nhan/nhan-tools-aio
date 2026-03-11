@@ -1,0 +1,130 @@
+[
+    {
+        "id": "home",
+        "name": "Trang chủ",
+        "description": "Trang chủ",
+        "icon": "Home",
+        "path": "/",
+        "color": "indigo"
+    },
+    {
+        "id": "code-generator",
+        "name": "Tạo mã ngẫu nhiên",
+        "description": "Tạo chuỗi ký tự ngẫu nhiên an toàn",
+        "icon": "Binary",
+        "path": "/code-gen",
+        "color": "indigo"
+    },
+    {
+        "id": "alarm-clock",
+        "name": "Hẹn giờ & Báo thức",
+        "description": "Đặt báo thức, hẹn giờ, bấm giờ với nhiều tính năng thông minh",
+        "icon": "AlarmClock",
+        "path": "/alarm-clock",
+        "color": "orange"
+    },
+    {
+        "id": "tabata-timer",
+        "name": "Đếm giờ Tabata",
+        "description": "Đồng hồ tập luyện cường độ cao ngắt quãng",
+        "icon": "Zap",
+        "path": "/tabata-timer",
+        "color": "purple"
+    },
+    {
+        "id": "ai-summarizer",
+        "name": "Tóm tắt văn bản AI",
+        "description": "Tóm tắt văn bản thông minh bằng AI",
+        "icon": "Brain",
+        "path": "/ai-summarizer",
+        "color": "emerald"
+    },
+    {
+        "id": "seo-tag-generator",
+        "name": "Tạo thẻ SEO",
+        "description": "Tự động tạo thẻ meta, tiêu đề và từ khóa SEO",
+        "icon": "Tag",
+        "path": "/seo-tag-generator",
+        "color": "amber"
+    },
+    {
+        "id": "real-estate-post",
+        "name": "Đăng tin BĐS",
+        "description": "Tạo tin đăng bất động sản chuyên nghiệp",
+        "icon": "Building2",
+        "path": "/real-estate-post",
+        "color": "amber"
+    },
+    {
+        "id": "prompt-library",
+        "name": "Thư viện câu lệnh",
+        "description": "Bộ sưu tập các câu lệnh AI hữu ích cho công việc",
+        "icon": "BookOpen",
+        "path": "/prompt-library",
+        "color": "purple"
+    },
+    {
+        "id": "tarot-reader",
+        "name": "Xem bài Tarot",
+        "description": "Xem bói Tarot với trí tuệ nhân tạo",
+        "icon": "Moon",
+        "path": "/xem-tarot",
+        "color": "purple"
+    },
+    {
+        "id": "discord-uploader",
+        "name": "Tải ảnh lên Discord",
+        "description": "Upload trực tiếp hình ảnh lên kênh Discord",
+        "icon": "Upload",
+        "path": "/discord-image-uploader",
+        "color": "indigo"
+    },
+    {
+        "id": "real-estate-fee-calculator",
+        "name": "Tính chi phí BĐS",
+        "description": "Tính thuế trước bạ, phí công chứng, sang tên, môi giới và lãi vay ngân hàng",
+        "icon": "Calculator",
+        "path": "/real-estate-fee-calculator",
+        "color": "emerald"
+    },
+    {
+        "id": "flappy-bird",
+        "name": "Game Flappy Bird",
+        "description": "Trò chơi Flappy Bird giải trí",
+        "icon": "Game",
+        "path": "/flappy-bird",
+        "color": "green"
+    },
+    {
+        "id": "notes-app",
+        "name": "Ghi chú",
+        "description": "Ghi chú nhanh, đồng bộ, gửi lên Discord",
+        "icon": "StickyNote",
+        "path": "/notes-app",
+        "color": "amber"
+    },
+    {
+        "id": "whats-for-dinner",
+        "name": "Nhà còn gì để nấu",
+        "description": "Nhập số tiền và nguyên liệu còn lại, AI sẽ gợi ý món ăn",
+        "icon": "ChefHat",
+        "path": "/whats-for-dinner",
+        "color": "orange"
+    },
+    {
+        "id": "home-workout-ai",
+        "name": "Tập luyện tại nhà AI",
+        "description": "AI tạo lịch tập cá nhân hóa dựa trên mục tiêu và thể trạng",
+        "icon": "Dumbbell",
+        "path": "/home-workout-ai",
+        "color": "rose"
+    },
+    {
+        "id": "disc-test",
+        "name": "Trắc nghiệm DISC",
+        "description": "Bài test tính cách DISC với 50 câu hỏi, phân tích kết quả chi tiết",
+        "icon": "Users",
+        "path": "/disc-test",
+        "color": "blue"
+    }
+]
