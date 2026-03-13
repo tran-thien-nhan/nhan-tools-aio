@@ -126,5 +126,13 @@
         "icon": "Users",
         "path": "/disc-test",
         "color": "blue"
+    },
+    {
+        "id": "image-to-video",
+        "name": "Tạo video từ hình ảnh",
+        "description": "Upload ảnh + âm thanh, ghép tự động 9:16 TikTok hoặc 16:9",
+        "icon": "Video",
+        "path": "/image-to-video",
+        "color": "cyan"
     }
 ]
