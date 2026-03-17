@@ -134,5 +134,13 @@
         "icon": "Video",
         "path": "/image-to-video",
         "color": "cyan"
+    },
+    {
+        "id": "thumbnail-creator",
+        "name": "Tạo Thumbnail",
+        "description": "Tạo và chỉnh sửa thumbnail chuyên nghiệp với nhiều tính năng giống Canva",
+        "icon": "Image",
+        "path": "/thumbnail-creator",
+        "color": "cyan"
     }
 ]
