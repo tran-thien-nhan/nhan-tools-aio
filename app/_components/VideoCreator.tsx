@@ -249,7 +249,7 @@ export default function VideoCreator({ onBack }: VideoCreatorProps) {
                             <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                                 <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Upload Âm Thanh (Tùy chọn)</h2>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    Thêm nhạc nền hoặc âm thanh cho video
+                                    Thêm nhạc nền / âm thanh cho video
                                 </p>
                             </div>
                             <div className="p-6">
