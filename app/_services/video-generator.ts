@@ -27,10 +27,8 @@ interface GenerateVideoResult {
 
 // Helper function to safely convert Uint8Array to Blob
 function uint8ArrayToBlob(uint8Array: Uint8Array, mimeType: string): Blob {
-    const buffer = new ArrayBuffer(uint8Array.length);
-    const view = new Uint8Array(buffer);
-    view.set(uint8Array);
-    return new Blob([buffer], { type: mimeType });
+    const safeArray = new Uint8Array(uint8Array);
+    return new Blob([safeArray], { type: mimeType });
 }
 
 export async function generateVideo({
@@ -52,14 +50,17 @@ export async function generateVideo({
             : { width: 1920, height: 1080 };
 
         // Upload images to FFmpeg
+        console.log(`Uploading ${images.length} images...`);
         for (let i = 0; i < images.length; i++) {
             const imageData = await fetchFile(images[i]);
             await ffmpeg.writeFile(`image${i}.jpg`, imageData);
+            console.log(`Uploaded image${i}.jpg`);
             onProgress?.(10 + (i / images.length) * 15, `Đang xử lý ảnh ${i + 1}/${images.length}`);
         }
 
         onProgress?.(25, 'Đang xử lý thông số video...');
 
+        // Xây dựng imageSequence dựa trên audio duration
         let imageSequence: Array<{ index: number, duration: number }> = [];
         let targetDuration: number;
 
@@ -68,17 +69,20 @@ export async function generateVideo({
             ? durations
             : images.map(() => 2); // Mặc định 2 giây nếu không có durations
 
+        console.log('Image durations:', imageDurations);
+
         if (audioFile && audioDuration) {
             // Có audio: target duration là thời lượng audio
             targetDuration = audioDuration;
-            onProgress?.(30, `Thời lượng âm thanh: ${targetDuration.toFixed(2)} giây`);
+            console.log(`Audio duration: ${targetDuration}s`);
 
             // Tính tổng thời lượng hình ảnh gốc
             const totalOriginalDuration = imageDurations.reduce((sum, dur) => sum + dur, 0);
+            console.log(`Total original duration: ${totalOriginalDuration}s`);
 
             if (totalOriginalDuration < targetDuration) {
                 // Trường hợp 1: Thời lượng hình ảnh < thời lượng audio -> Lặp lại hình ảnh
-                onProgress?.(35, `Thời lượng hình ảnh (${totalOriginalDuration.toFixed(2)}s) < thời lượng audio, sẽ lặp lại hình ảnh...`);
+                console.log('Image duration < audio duration, will repeat images');
                 
                 let currentTime = 0;
                 
@@ -90,13 +94,13 @@ export async function generateVideo({
                         const remainingTime = targetDuration - currentTime;
                         const originalDuration = imageDurations[i];
                         
-                        // Nếu đây là hình cuối cùng
                         if (currentTime + originalDuration >= targetDuration) {
                             // Kéo dài hình cuối để khớp với thời gian còn lại
                             imageSequence.push({
                                 index: i,
                                 duration: remainingTime
                             });
+                            console.log(`  Add image ${i} (final) with duration: ${remainingTime.toFixed(2)}s`);
                             currentTime += remainingTime;
                         } else {
                             // Thêm hình với duration gốc
@@ -104,15 +108,14 @@ export async function generateVideo({
                                 index: i,
                                 duration: originalDuration
                             });
+                            console.log(`  Add image ${i} with duration: ${originalDuration}s`);
                             currentTime += originalDuration;
                         }
-                        
-                        if (currentTime >= targetDuration) break;
                     }
                 }
             } else {
                 // Trường hợp 2: Thời lượng hình ảnh >= thời lượng audio -> Cắt bớt
-                onProgress?.(35, `Thời lượng hình ảnh (${totalOriginalDuration.toFixed(2)}s) >= thời lượng audio, sẽ cắt bớt hình ảnh...`);
+                console.log('Image duration >= audio duration, will trim last image');
                 
                 let currentTime = 0;
                 
@@ -128,6 +131,7 @@ export async function generateVideo({
                             index: i,
                             duration: remainingTime
                         });
+                        console.log(`  Add image ${i} (trimmed) with duration: ${remainingTime.toFixed(2)}s`);
                         currentTime += remainingTime;
                     } else {
                         // Thêm hình với duration gốc
@@ -135,6 +139,7 @@ export async function generateVideo({
                             index: i,
                             duration: originalDuration
                         });
+                        console.log(`  Add image ${i} with duration: ${originalDuration}s`);
                         currentTime += originalDuration;
                     }
                 }
@@ -143,64 +148,85 @@ export async function generateVideo({
             // Upload audio file
             const audioData = await fetchFile(audioFile);
             await ffmpeg.writeFile('audio.mp3', audioData);
-
-            onProgress?.(40, `Đã tạo sequence với ${imageSequence.length} khung hình, thời gian: ${targetDuration.toFixed(2)}s`);
+            console.log('Uploaded audio file');
         } else {
             // Không có audio: tạo video với durations gốc
-            targetDuration = imageDurations.reduce((sum, dur) => sum + dur, 0);
+            console.log('No audio, creating video with original durations');
             
             for (let i = 0; i < images.length; i++) {
                 imageSequence.push({
                     index: i,
                     duration: imageDurations[i]
                 });
+                console.log(`  Add image ${i} with duration: ${imageDurations[i]}s`);
             }
-            onProgress?.(40, `Không có audio, tạo video với ${imageSequence.length} khung hình, thời gian: ${targetDuration.toFixed(2)}s`);
+            targetDuration = imageDurations.reduce((sum, dur) => sum + dur, 0);
         }
 
-        // Tạo concat file cho FFmpeg
-        let concatContent = '';
+        console.log(`\n=== IMAGE SEQUENCE ===`);
+        console.log(`Total frames: ${imageSequence.length}`);
+        console.log(`Target duration: ${targetDuration.toFixed(2)}s`);
+        imageSequence.forEach((item, idx) => {
+            console.log(`  ${idx + 1}. Image ${item.index} - ${item.duration.toFixed(2)}s`);
+        });
+
+        onProgress?.(40, `Đang tạo video với ${imageSequence.length} khung hình...`);
+
+        // Tạo video cho từng ảnh trong sequence
+        const partFiles = [];
         for (let i = 0; i < imageSequence.length; i++) {
             const { index, duration } = imageSequence[i];
-            concatContent += `file 'image${index}.jpg'\n`;
-            concatContent += `duration ${duration.toFixed(3)}\n`;
+            const partName = `part${i}.mp4`;
+            partFiles.push(partName);
+            
+            console.log(`Creating part ${i} from image${index}.jpg with duration ${duration}s...`);
+            
+            // Tạo video từ 1 ảnh với thời lượng xác định
+            await ffmpeg.exec([
+                '-loop', '1',
+                '-i', `image${index}.jpg`,
+                '-vf', `scale=${dimensions.width}:${dimensions.height}:force_original_aspect_ratio=1,pad=${dimensions.width}:${dimensions.height}:(ow-iw)/2:(oh-ih)/2:color=black,fps=30,format=yuv420p`,
+                '-c:v', 'libx264',
+                '-preset', 'ultrafast',
+                '-t', duration.toString(),
+                '-pix_fmt', 'yuv420p',
+                '-y',
+                partName
+            ]);
+            
+            console.log(`Created ${partName}`);
+            onProgress?.(40 + (i / imageSequence.length) * 30, `Đang xử lý khung hình ${i + 1}/${imageSequence.length}`);
         }
 
-        // FFmpeg concat yêu cầu file cuối cùng không có duration
-        if (imageSequence.length > 0) {
-            const lastIndex = imageSequence[imageSequence.length - 1].index;
-            concatContent += `file 'image${lastIndex}.jpg'`;
+        onProgress?.(70, 'Đang ghép các đoạn video...');
+
+        // Tạo file concat list
+        let concatList = '';
+        for (const partFile of partFiles) {
+            concatList += `file '${partFile}'\n`;
         }
+        await ffmpeg.writeFile('concat_list.txt', concatList);
+        console.log('Concat list:', concatList);
 
-        // Ghi concat file
-        await ffmpeg.writeFile('concat.txt', concatContent);
-
-        onProgress?.(50, 'Đang tạo video từ hình ảnh...');
-
-        // Log để debug
-        console.log('Concat content:', concatContent);
-        console.log('Total video duration:', targetDuration);
-        console.log('Number of images in sequence:', imageSequence.length);
-
-        // Tạo video từ danh sách hình ảnh
+        // Ghép các part lại với nhau
         await ffmpeg.exec([
             '-f', 'concat',
             '-safe', '0',
-            '-i', 'concat.txt',
-            '-vf', `scale=${dimensions.width}:${dimensions.height}:force_original_aspect_ratio=1,pad=${dimensions.width}:${dimensions.height}:(ow-iw)/2:(oh-ih)/2,fps=30`,
-            '-c:v', 'libx264',
-            '-preset', 'ultrafast',
-            '-pix_fmt', 'yuv420p',
-            '-t', targetDuration.toString(), // QUAN TRỌNG: Giới hạn thời gian video
+            '-i', 'concat_list.txt',
+            '-c', 'copy',
             '-y',
             'video_no_audio.mp4'
         ]);
 
-        onProgress?.(70, 'Đã tạo xong video, đang ghép âm thanh...');
+        console.log('Merged all parts into video_no_audio.mp4');
 
-        // Ghép âm thanh nếu có
+        onProgress?.(80, 'Đang xử lý âm thanh...');
+
+        // Xử lý âm thanh nếu có
         if (audioFile) {
-            // QUAN TRỌNG: Không dùng -shortest, mà dùng -t để đảm bảo audio phát hết
+            console.log('Adding audio...');
+            
+            // Ghép âm thanh với video
             await ffmpeg.exec([
                 '-i', 'video_no_audio.mp4',
                 '-i', 'audio.mp3',
@@ -208,11 +234,14 @@ export async function generateVideo({
                 '-c:a', 'aac',
                 '-map', '0:v:0',
                 '-map', '1:a:0',
-                '-t', targetDuration.toString(), // Đảm bảo video có độ dài bằng audio
+                '-t', targetDuration.toString(),
                 '-y',
                 'final_output.mp4'
             ]);
+            
+            console.log('Added audio');
         } else {
+            // Không có audio, copy video
             await ffmpeg.exec(['-i', 'video_no_audio.mp4', '-c', 'copy', '-y', 'final_output.mp4']);
         }
 
@@ -220,6 +249,7 @@ export async function generateVideo({
 
         // Đọc file kết quả
         const data = await ffmpeg.readFile('final_output.mp4');
+        console.log('Final video size:', data.length, 'bytes');
 
         // Chuyển đổi dữ liệu an toàn
         let uint8Array: Uint8Array;
